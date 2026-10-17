@@ -130,8 +130,8 @@ hr{border:0;height:1px;background:linear-gradient(90deg,transparent,var(--line),
 /* connect */
 .connect{text-align:center;padding:30px 16px;margin:50px 0 30px}
 .connect h2{font-size:30px}.connect p{color:var(--mut);margin:8px 0 22px}.connect .icons{justify-content:center;margin:0}
-.crowd{background:#f4f4f0;color:#0b0b0c;padding-top:30px;position:relative;overflow:hidden}
-.crowd-top{text-align:center;font-weight:600;font-size:15px;padding:0 16px 14px;line-height:1.4}
+.crowd{background:#f4f4f0;color:#0b0b0c;padding-top:16px;position:relative;overflow:hidden}
+.crowd-top{text-align:center;font-weight:600;font-size:14px;padding:0 16px 6px;line-height:1.4}
 .crowd-top b{font-size:22px;font-variant-numeric:tabular-nums}
 .crowd-top small{display:block;color:#6b6b73;font-weight:500;font-size:12px;margin-top:2px;min-height:15px}
 .crowd canvas{display:block;width:100%}
@@ -1136,7 +1136,7 @@ function hideCount(){['visits','visits2'].forEach(function(id){var e=document.ge
   function mk(i){
     var r=rng(i*977+13),pick=function(a){return a[Math.floor(r()*a.length)]};
     var p={i:i,hair:pick([0,1,1,1,2,2,3,4,4,5,5,6,7,8,9,10,11,12]),beard:pick([0,0,0,0,1,2,3]),stache:r()<.2,glasses:pick([0,0,0,1,1,2]),mouth:pick([0,0,0,1,1,2,3]),
-      shirt:pick([0,1,1,2,3,4,5,6]),brow:r()<.7,rx:21+r()*5,ry:25+r()*4,sp:.8+r()*1.3,ph:r()*6.28,ph2:r()*6.28,ph3:r()*10,amp:.9+r()*1.8,talk:r()<.25,earr:r()<.15,dots:[]};
+      shirt:pick([0,1,1,2,3,4,5,6]),brow:r()<.7,rx:21+r()*5,ry:25+r()*4,sp:1.1+r()*1.5,ph:r()*6.28,ph2:r()*6.28,ph3:r()*10,amp:2.2+r()*2.6,dr:10+r()*16,dsp:.35+r()*.5,waver:r()<.3,dance:r()<.2,talk:r()<.25,earr:r()<.15,dots:[]};
     if(p.hair===9){p.shirt=1;p.beard=0;p.stache=false}
     for(var k=0;k<16;k++)p.dots.push([(r()-.5)*30,-26+r()*16]);
     return p}
@@ -1209,13 +1209,15 @@ function hideCount(){['visits','visits2'].forEach(function(id){var e=document.ge
   function person(p,x,y,u,t,wave){
     ctx.save();ctx.translate(x,y);ctx.scale(u,u);
     var lw=Math.max(2.4,1.5/u);ctx.lineWidth=lw;ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle=INK;
-    var bob=reduce?0:Math.sin(t*p.sp*2+p.ph)*p.amp,sway=reduce?0:Math.sin(t*p.sp+p.ph2)*.035,hop=scare>0?-scare*(Math.sin(t*16+p.ph)*.5+.5)*14:0;
-    ctx.translate(0,bob+hop);
+    var M=reduce?.4:1,walk=Math.sin(t*p.dsp+p.ph2),stp=Math.abs(Math.sin(t*p.dsp*5+p.ph))*3.2,bob=(Math.sin(t*p.sp*3+p.ph)*p.amp-stp)*M,
+        sway=(Math.sin(t*p.sp*1.4+p.ph2)*.07+(p.dance?Math.sin(t*6+p.ph)*.06:0))*M,hq=(t*.28+p.ph3*.7)%1,hopk=hq<.07?Math.sin(hq/.07*Math.PI)*9*M:0,
+        hop=scare>0?-scare*(Math.sin(t*16+p.ph)*.5+.5)*14:-hopk;
+    ctx.translate(walk*p.dr*M,bob+hop);ctx.rotate(sway*.35);
     /* gaze: follow the pointer when it is close, otherwise wander */
     var dx=(mouse.x-x)/(u*120),dy=Math.abs(mouse.y-y)/u,lx=(dy<420&&Math.abs(dx)<4)?clamp(dx,-1,1)*4.2:Math.sin(t*.5+p.ph2)*2.6;
     var blink=((t*.37+p.ph3)%1)<.035,open=scare>.25||(p.talk&&Math.sin(t*7+p.ph)>.35);
     backHair(p);body(p);
-    if(wave){ctx.save();ctx.strokeStyle=INK;ctx.lineWidth=lw*3;var wx=52+Math.sin(t*9)*7;ctx.beginPath();ctx.moveTo(34,20);ctx.lineTo(48,-8);ctx.lineTo(wx,-34);ctx.stroke();ctx.lineWidth=lw;ell(wx,-40,7,7,'#fff',true);ctx.restore()}
+    if(wave||(p.waver&&((t*.22+p.ph3)%1)<.3)){ctx.save();ctx.strokeStyle=INK;ctx.lineWidth=lw*3;var wx=52+Math.sin(t*9)*7;ctx.beginPath();ctx.moveTo(34,20);ctx.lineTo(48,-8);ctx.lineTo(wx,-34);ctx.stroke();ctx.lineWidth=lw;ell(wx,-40,7,7,'#fff',true);ctx.restore()}
     ctx.save();ctx.rotate(sway);head(p,lx,blink,scare>.25,open);ctx.restore();
     ctx.restore();
   }
@@ -1223,9 +1225,9 @@ function hideCount(){['visits','visits2'].forEach(function(id){var e=document.ge
   /* ---------- layout: new people join at the back, so the crowd grows upwards ---------- */
   function layout(){
     W=sec.clientWidth;dpr=Math.min(2,devicePixelRatio||1);
-    var n=Math.min(N,MAXN),maxH=Math.min(640,Math.max(260,innerHeight*.85)),best=null,s,c,rows,step,h;
+    var n=Math.min(N,MAXN),maxH=Math.min(360,Math.max(230,innerHeight*.5)),best=null,s,c,rows,step,h;
     if(!n){cv.style.height='0px';cv.width=1;cv.height=1;people=[];return}
-    for(s=110;s>=44;s-=4){c=Math.max(1,Math.floor(W/(s*.74)));rows=Math.ceil(n/c);step=s*.34;h=(rows-1)*step+s*1.42;if(h<=maxH||s===44){best={s:s,c:c,rows:rows,step:step,h:h};break}}
+    for(s=100;s>=40;s-=4){c=Math.max(1,Math.floor(W/(s*.7)));rows=Math.ceil(n/c);step=s*.3;h=(rows-1)*step+s*1.42;if(h<=maxH||s===40){best={s:s,c:c,rows:rows,step:step,h:h};break}}
     U=best.s/100;Hh=Math.round(best.h);
     cv.style.height=Hh+'px';cv.width=Math.round(W*dpr);cv.height=Math.round(Hh*dpr);
     var order=[],j;for(j=0;j<best.c;j++)order.push(j);order.sort(function(a,b){return Math.abs(a-(best.c-1)/2)-Math.abs(b-(best.c-1)/2)||a-b});
